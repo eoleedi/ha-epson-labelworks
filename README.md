@@ -108,7 +108,5 @@ Hardware validation is performed by the config flow, which opens the selected tr
 
 ## Protocol Source
 
-This project reuses the protocol discovery from `epson-label-server`, based on:
-
 - https://github.com/tyalie/RE-epson-label-printer
 - https://github.com/oxplot/nospero
