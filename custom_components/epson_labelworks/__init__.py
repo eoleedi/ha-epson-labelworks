@@ -32,7 +32,7 @@ SERVICE_SCHEMA = vol.Schema(
         vol.Optional("image_base64"): cv.string,
         vol.Optional("tape_width_mm", default=12): vol.All(vol.Coerce(float), vol.Range(min=4, max=36)),
         vol.Optional("length_mm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=500)),
-        vol.Optional("font_size", default=28): vol.All(vol.Coerce(int), vol.Range(min=8, max=96)),
+        vol.Optional("font_size", default=24): vol.All(vol.Coerce(int), vol.Range(min=8, max=96)),
         vol.Optional("cut", default=protocol.CutMode.AFTER): vol.Coerce(protocol.CutMode),
         vol.Optional("density", default=0): vol.All(vol.Coerce(int), vol.Range(min=-5, max=5)),
         vol.Optional("margin_mm", default=1): vol.All(vol.Coerce(float), vol.Range(min=0, max=20)),

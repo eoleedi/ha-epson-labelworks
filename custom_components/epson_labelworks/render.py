@@ -6,12 +6,15 @@ from textwrap import wrap
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
-from .protocol import dots_from_mm
+from .protocol import DPI, dots_from_mm
+
+POINTS_PER_INCH = 72
 
 
 def text_label(text: str, tape_width_mm: float, length_mm: float | None, font_size: int) -> Image.Image:
     height = dots_from_mm(tape_width_mm)
-    font = _font(font_size)
+    font_size_pixels = pixels_from_points(font_size)
+    font = _font(font_size_pixels)
     parts = text.splitlines() or [""]
     if length_mm is None:
         measure = ImageDraw.Draw(Image.new("L", (1, 1)))
@@ -22,12 +25,12 @@ def text_label(text: str, tape_width_mm: float, length_mm: float | None, font_si
     else:
         width = dots_from_mm(length_mm)
         lines = []
-        chars_per_line = max(1, (width - 12) // max(1, round(font_size * 0.58)))
+        chars_per_line = max(1, (width - 12) // max(1, round(font_size_pixels * 0.58)))
         for part in parts:
             lines.extend(wrap(part, chars_per_line) or [""])
     image = Image.new("L", (width, height), 255)
     draw = ImageDraw.Draw(image)
-    line_height = font_size + 4
+    line_height = font_size_pixels + 4
     y = max(0, (height - len(lines) * line_height) // 2)
     for line in lines:
         box = draw.textbbox((0, 0), line, font=font)
@@ -45,10 +48,14 @@ def image_label(encoded: str, tape_width_mm: float, length_mm: float) -> Image.I
     return image
 
 
+def pixels_from_points(points: int) -> int:
+    return round(points * DPI / POINTS_PER_INCH)
+
+
 def _font(size: int) -> ImageFont.ImageFont:
     for name in ("DejaVuSans.ttf", "Arial.ttf"):
         try:
             return ImageFont.truetype(name, size=size)
         except OSError:
             pass
-    return ImageFont.load_default()
+    return ImageFont.load_default(size=size)

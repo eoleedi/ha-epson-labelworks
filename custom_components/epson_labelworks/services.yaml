@@ -44,7 +44,8 @@ print_label:
           mode: box
     font_size:
       name: Font size
-      default: 28
+      description: Font size in typographic points.
+      default: 24
       selector:
         number:
           min: 8
