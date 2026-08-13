@@ -110,3 +110,7 @@ Hardware validation is performed by the config flow, which opens the selected tr
 
 - https://github.com/tyalie/RE-epson-label-printer
 - https://github.com/oxplot/nospero
+
+## License
+
+MIT. See [LICENSE](LICENSE). This project includes work derived from [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer); its copyright and permission notice are preserved in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
