@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
@@ -25,6 +25,7 @@ from .const import (
     PLATFORMS,
     TRANSPORT_BLUETOOTH,
 )
+from .settings import PrintSettings
 from .transport import BluetoothSerialTransport, PrinterTransport, UsbTransport
 
 SERVICE_PRINT_LABEL = "print_label"
@@ -47,6 +48,7 @@ SERVICE_SCHEMA = vol.Schema(
 class EpsonLabelWorksRuntime:
     name: str
     transport: PrinterTransport
+    settings: PrintSettings = field(default_factory=PrintSettings)
 
     def __post_init__(self) -> None:
         self.lock = threading.Lock()

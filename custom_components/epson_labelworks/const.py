@@ -2,7 +2,7 @@ from homeassistant.const import Platform
 
 
 DOMAIN = "epson_labelworks"
-PLATFORMS = [Platform.TEXT]
+PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.TEXT]
 
 CONF_TRANSPORT = "transport"
 CONF_USB_DEVICE = "usb_device"

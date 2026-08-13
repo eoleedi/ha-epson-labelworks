@@ -30,5 +30,19 @@
       "usb_discovery_failed": "USB devices could not be detected. Check Home Assistant's USB permissions."
     },
     "abort": {"already_configured": "This printer is already configured"}
+  },
+  "entity": {
+    "number": {
+      "tape_width_mm": {"name": "Tape width"},
+      "font_size": {"name": "Font size"},
+      "density": {"name": "Print density"},
+      "margin_mm": {"name": "Margin"}
+    },
+    "select": {
+      "cut_mode": {
+        "name": "Cut mode",
+        "state": {"each": "Each label", "after": "After job", "none": "Do not cut"}
+      }
+    }
   }
 }

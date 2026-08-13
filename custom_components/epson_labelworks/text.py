@@ -8,7 +8,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import EpsonLabelWorksRuntime
 from .const import DOMAIN
-from .protocol import CutMode
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -48,14 +47,7 @@ class EpsonLabelTextEntity(TextEntity):
     async def async_set_value(self, value: str) -> None:
         if not value:
             return
-        data = {
-            "text": value,
-            "tape_width_mm": 12,
-            "font_size": 24,
-            "cut": CutMode.AFTER,
-            "density": 0,
-            "margin_mm": 1,
-        }
+        data = self._runtime.settings.text_print_data(value)
         await self.hass.async_add_executor_job(self._runtime.print_label, data)
         self._attr_native_value = ""
         self.async_write_ha_state()
