@@ -83,6 +83,8 @@ The printer device also provides configuration entities for tape width, font siz
 
 The integration includes an **Epson LabelWorks** dashboard card with a live tape preview, text entry, print button, and all print settings. It is registered automatically when the integration loads.
 
+![Epson LabelWorks dashboard card](screenshots/dashboard-card.png)
+
 Add it from the dashboard card picker, or use YAML:
 
 ```yaml
