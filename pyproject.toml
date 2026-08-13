@@ -1,0 +1,17 @@
+[project]
+name = "ha-epson-labelworks"
+version = "0.1.0"
+description = "Home Assistant integration for Epson LabelWorks printers over USB or Bluetooth RFCOMM"
+requires-python = ">=3.12"
+dependencies = [
+    "pillow>=10,<13",
+    "pyserial>=3.5,<4",
+    "pyusb>=1.2,<2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["custom_components/epson_labelworks"]

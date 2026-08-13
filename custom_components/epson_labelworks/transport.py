@@ -1,0 +1,150 @@
+from __future__ import annotations
+
+import time
+from abc import ABC, abstractmethod
+
+from . import protocol
+
+
+class PrinterTransport(ABC):
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.close()
+
+    @abstractmethod
+    def open(self) -> None: ...
+
+    @abstractmethod
+    def close(self) -> None: ...
+
+    @abstractmethod
+    def write(self, data: bytes) -> None: ...
+
+    @abstractmethod
+    def read(self, size: int, timeout_s: float) -> bytes: ...
+
+    def read_status(self, timeout_s: float = 10) -> protocol.Status:
+        deadline = time.monotonic() + timeout_s
+        pending = bytearray()
+        while time.monotonic() < deadline:
+            pending.extend(self.read(512, min(1, deadline - time.monotonic())))
+            frame = protocol.find_status_frame(pending)
+            if frame is not None:
+                return protocol.parse_status(frame)
+            if len(pending) > 4096:
+                del pending[:-4096]
+        raise TimeoutError("timed out waiting for printer status")
+
+    def status(self) -> protocol.Status:
+        self.write(protocol.reset_status_request())
+        return self.read_status()
+
+    def print_image(self, image, cut: protocol.CutMode, density: int, margin_dots: int) -> protocol.Status:
+        self.write(protocol.reset_printer())
+        time.sleep(0.5)
+        self.write(protocol.build_print_stream(image, cut, density, margin_dots))
+        return self.wait_until_ready()
+
+    def wait_until_ready(self, timeout_s: float = 60) -> protocol.Status:
+        deadline = time.monotonic() + timeout_s
+        last_status = None
+        while time.monotonic() < deadline:
+            status = self.read_status(min(5, max(1, deadline - time.monotonic())))
+            last_status = status
+            if status.error_code or status.ready_for_print:
+                return status
+        if last_status is not None:
+            return last_status
+        raise TimeoutError("timed out waiting for printer to finish")
+
+
+class UsbTransport(PrinterTransport):
+    def __init__(self, vendor_id: int, product_id: int, interface: int = 0):
+        self.vendor_id = vendor_id
+        self.product_id = product_id
+        self.interface = interface
+        self.device = self.out_endpoint = self.in_endpoint = None
+
+    def open(self) -> None:
+        import usb.core
+        import usb.util
+
+        device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id)
+        if device is None:
+            raise RuntimeError(f"USB Epson printer not found ({self.vendor_id:04x}:{self.product_id:04x})")
+        try:
+            device.set_configuration()
+        except usb.core.USBError:
+            pass
+        try:
+            if device.is_kernel_driver_active(self.interface):
+                device.detach_kernel_driver(self.interface)
+        except (NotImplementedError, usb.core.USBError):
+            pass
+        usb.util.claim_interface(device, self.interface)
+        interface = usb.util.find_descriptor(device.get_active_configuration(), bInterfaceNumber=self.interface)
+        self.out_endpoint = usb.util.find_descriptor(interface, custom_match=lambda endpoint: usb.util.endpoint_direction(endpoint.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+        self.in_endpoint = usb.util.find_descriptor(interface, custom_match=lambda endpoint: usb.util.endpoint_direction(endpoint.bEndpointAddress) == usb.util.ENDPOINT_IN)
+        if self.out_endpoint is None or self.in_endpoint is None:
+            raise RuntimeError("USB bulk endpoints not found")
+        self.device = device
+
+    def close(self) -> None:
+        if self.device is not None:
+            import usb.util
+
+            try:
+                usb.util.release_interface(self.device, self.interface)
+            finally:
+                usb.util.dispose_resources(self.device)
+        self.device = self.out_endpoint = self.in_endpoint = None
+
+    def write(self, data: bytes) -> None:
+        if self.out_endpoint is None:
+            raise RuntimeError("USB transport is closed")
+        for chunk in protocol.stream_chunks(data):
+            if self.out_endpoint.write(chunk, timeout=1000) != len(chunk):
+                raise RuntimeError("short USB write")
+
+    def read(self, size: int, timeout_s: float) -> bytes:
+        if self.in_endpoint is None:
+            raise RuntimeError("USB transport is closed")
+        import usb.core
+
+        try:
+            return bytes(self.in_endpoint.read(size, timeout=max(1, round(timeout_s * 1000))))
+        except usb.core.USBTimeoutError:
+            return b""
+
+
+class BluetoothSerialTransport(PrinterTransport):
+    def __init__(self, port: str, baudrate: int = 115200):
+        self.port = port
+        self.baudrate = baudrate
+        self.serial = None
+
+    def open(self) -> None:
+        import serial
+
+        self.serial = serial.Serial(self.port, self.baudrate, timeout=1, write_timeout=5)
+
+    def close(self) -> None:
+        if self.serial is not None:
+            self.serial.close()
+        self.serial = None
+
+    def write(self, data: bytes) -> None:
+        if self.serial is None:
+            raise RuntimeError("Bluetooth serial transport is closed")
+        if self.serial.write(data) != len(data):
+            raise RuntimeError("short Bluetooth serial write")
+        self.serial.flush()
+
+    def read(self, size: int, timeout_s: float) -> bytes:
+        if self.serial is None:
+            raise RuntimeError("Bluetooth serial transport is closed")
+        self.serial.timeout = timeout_s
+        return self.serial.read(size)

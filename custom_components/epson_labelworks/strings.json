@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose a printer connection",
+        "data": {"transport": "Connection"}
+      },
+      "usb": {
+        "title": "USB printer",
+        "data": {
+          "name": "Name",
+          "usb_vendor_id": "USB vendor ID",
+          "usb_product_id": "USB product ID",
+          "usb_interface": "USB interface"
+        }
+      },
+      "bluetooth": {
+        "title": "Bluetooth serial printer",
+        "description": "Pair the printer on the host and expose it as an RFCOMM serial device first.",
+        "data": {
+          "name": "Name",
+          "serial_port": "Serial device",
+          "serial_baudrate": "Baud rate"
+        }
+      }
+    },
+    "error": {"cannot_connect": "Cannot connect to the printer or read its status"},
+    "abort": {"already_configured": "This printer is already configured"}
+  }
+}

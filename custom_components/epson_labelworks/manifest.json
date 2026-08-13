@@ -1,0 +1,15 @@
+{
+  "domain": "epson_labelworks",
+  "name": "Epson LabelWorks",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/eoleedi/ha-epson-labelworks",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "requirements": [
+    "Pillow>=10,<13",
+    "pyserial>=3.5,<4",
+    "pyusb>=1.2,<2"
+  ],
+  "version": "0.1.0"
+}

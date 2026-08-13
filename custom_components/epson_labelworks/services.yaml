@@ -1,0 +1,78 @@
+print_label:
+  name: Print label
+  description: Print text or a base64-encoded image on an Epson LabelWorks printer.
+  fields:
+    config_entry_id:
+      name: Printer
+      description: Config entry ID. Optional when only one printer is configured.
+      required: false
+      selector:
+        config_entry:
+          integration: epson_labelworks
+    text:
+      name: Text
+      description: Text to print. Use either text or image, not both.
+      required: false
+      selector:
+        text:
+          multiline: true
+    image_base64:
+      name: Image
+      description: Base64-encoded PNG or JPEG image.
+      required: false
+      selector:
+        text:
+          multiline: true
+    tape_width_mm:
+      name: Tape width
+      default: 12
+      selector:
+        number:
+          min: 4
+          max: 36
+          unit_of_measurement: mm
+          mode: box
+    length_mm:
+      name: Label length
+      description: Optional fixed label length. When omitted for text, the length is detected automatically. Required for images.
+      required: false
+      selector:
+        number:
+          min: 10
+          max: 500
+          unit_of_measurement: mm
+          mode: box
+    font_size:
+      name: Font size
+      default: 28
+      selector:
+        number:
+          min: 8
+          max: 96
+          mode: box
+    cut:
+      name: Cut mode
+      default: after
+      selector:
+        select:
+          options:
+            - after
+            - each
+            - none
+    density:
+      name: Density
+      default: 0
+      selector:
+        number:
+          min: -5
+          max: 5
+          mode: slider
+    margin_mm:
+      name: Margin
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 20
+          unit_of_measurement: mm
+          mode: box
