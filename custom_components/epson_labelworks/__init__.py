@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import voluptuous as vol
+from homeassistant.components import frontend
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, ServiceCall
@@ -29,6 +32,8 @@ from .settings import PrintSettings
 from .transport import BluetoothSerialTransport, PrinterTransport, UsbTransport
 
 SERVICE_PRINT_LABEL = "print_label"
+CARD_URL = "/epson_labelworks/epson-labelworks-card.js"
+CARD_MODULE_URL = f"{CARD_URL}?v=4"
 SERVICE_SCHEMA = vol.Schema(
     {
         vol.Optional("config_entry_id"): cv.string,
@@ -78,6 +83,10 @@ class EpsonLabelWorksRuntime:
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     hass.data.setdefault(DOMAIN, {})
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL, str(Path(__file__).parent / "frontend" / "epson-labelworks-card.js"), False)]
+    )
+    frontend.add_extra_js_url(hass, CARD_MODULE_URL)
 
     async def handle_print(call: ServiceCall) -> None:
         runtimes: dict[str, EpsonLabelWorksRuntime] = hass.data[DOMAIN]

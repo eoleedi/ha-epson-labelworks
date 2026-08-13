@@ -67,6 +67,21 @@ data:
 
 The entity is intentionally cleared after each print so the same text can be printed repeatedly.
 
+The printer device also provides configuration entities for tape width, font size, print density, margin, and cut mode. Values changed in the Home Assistant UI are used by the text entity and restored after restart.
+
+### Dashboard Card
+
+The integration includes an **Epson LabelWorks** dashboard card with a live tape preview, text entry, print button, and all print settings. It is registered automatically when the integration loads.
+
+Add it from the dashboard card picker, or use YAML:
+
+```yaml
+type: custom:epson-labelworks-card
+device: 0123456789abcdef0123456789abcdef
+```
+
+Select the printer in the visual card editor to avoid entering its device ID manually. The card discovers all print entities through Home Assistant's device registry, so renamed entities and area prefixes are supported. Entity overrides remain available under **Setting entities**.
+
 For Chinese and other scripts not covered by Pillow's default font, place a TrueType or OpenType font in Home Assistant's `config/fonts` directory. The integration automatically prefers `NotoSansCJKtc-Regular.otf` and `NotoSansTC-Regular.ttf`, then tries other `.otf` and `.ttf` files in that directory.
 
 ## Print Action
