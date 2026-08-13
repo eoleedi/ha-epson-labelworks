@@ -3,6 +3,7 @@
 [![Beta](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/eoleedi/ha-epson-labelworks/releases)
 [![GitHub Release](https://img.shields.io/github/v/release/eoleedi/ha-epson-labelworks?display_name=tag&include_prereleases)](https://github.com/eoleedi/ha-epson-labelworks/releases)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eoleedi&repository=ha-epson-labelworks&category=integration)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-orange.svg?logo=buymeacoffee&logoColor=white)](https://www.buymeacoffee.com/eoleedi)
 
 Custom Home Assistant integration that exposes an Epson LabelWorks LW-600P as a local printer. It generates the reverse-engineered Epson raster protocol directly and sends it over either USB or a Bluetooth Classic RFCOMM serial device.
 
@@ -140,3 +141,9 @@ Huge thanks to others contribution on reverse engineering the espon LW series pr
 ## License
 
 MIT. See [LICENSE](LICENSE). This project includes work derived from [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer); its copyright and permission notice are preserved in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+
+## Support
+
+If you think it's helpful, kindly support me!
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/eoleedi)
