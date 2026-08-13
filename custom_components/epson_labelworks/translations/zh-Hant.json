@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "選擇印表機連線方式",
+        "data": {
+          "transport": "連線方式"
+        }
+      },
+      "usb": {
+        "title": "USB 印表機",
+        "description": "選擇已連接的 USB 印表機。整合會確認裝置是否支援 Epson LabelWorks 通訊協定。",
+        "data": {
+          "name": "名稱",
+          "usb_device": "USB 裝置"
+        }
+      },
+      "bluetooth": {
+        "title": "藍牙印表機",
+        "description": "請先在主機上配對印表機，並將其設定為 RFCOMM 序列埠裝置。",
+        "data": {
+          "name": "名稱",
+          "serial_port": "序列埠裝置",
+          "serial_baudrate": "傳輸速率"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "無法連線至印表機或讀取其狀態",
+      "no_usb_devices": "找不到 USB 裝置。請連接印表機並檢查 Home Assistant 的 USB 權限，然後再試一次。",
+      "usb_device_unavailable": "選取的 USB 裝置已無法使用。請返回並重新整理裝置清單。",
+      "usb_discovery_failed": "無法偵測 USB 裝置。請檢查 Home Assistant 的 USB 權限。"
+    },
+    "abort": {
+      "already_configured": "此印表機已完成設定"
+    }
+  },
+  "entity": {
+    "number": {
+      "tape_width_mm": {
+        "name": "標籤帶寬度"
+      },
+      "font_size": {
+        "name": "字體大小"
+      },
+      "density": {
+        "name": "列印濃度"
+      },
+      "margin_mm": {
+        "name": "邊距"
+      }
+    },
+    "select": {
+      "cut_mode": {
+        "name": "裁切模式",
+        "state": {
+          "each": "每張標籤後裁切",
+          "after": "工作完成後裁切",
+          "none": "不裁切"
+        }
+      }
+    }
+  }
+}

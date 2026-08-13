@@ -1,4 +1,50 @@
 const CARD_NAME = "epson-labelworks-card";
+const CARD_STRINGS = {
+  en: {
+    unavailable: "Unavailable",
+    ready: "Ready",
+    preview: "Label preview",
+    labelText: "Label text",
+    placeholder: "Type a label...",
+    print: "Print",
+    printing: "Printing...",
+    tape: "Tape",
+    font: "Font",
+    density: "Density",
+    margin: "Margin",
+    cut: "Cut",
+    cutMode: "Cut mode",
+    each: "Each label",
+    after: "After job",
+    none: "Do not cut",
+    discoveryError: "Could not discover printer entities",
+    noDevice: "The selected printer has no Home Assistant device",
+    noPrintEntity: "No print entity was found for this printer",
+    actionError: "Home Assistant could not complete the action",
+  },
+  "zh-Hant": {
+    unavailable: "無法使用",
+    ready: "就緒",
+    preview: "標籤預覽",
+    labelText: "標籤文字",
+    placeholder: "輸入標籤文字...",
+    print: "列印",
+    printing: "列印中...",
+    tape: "標籤帶",
+    font: "字體大小",
+    density: "濃度",
+    margin: "邊距",
+    cut: "裁切",
+    cutMode: "裁切模式",
+    each: "每張裁切",
+    after: "工作後裁切",
+    none: "不裁切",
+    discoveryError: "無法找到印表機實體",
+    noDevice: "選取的印表機沒有 Home Assistant 裝置",
+    noPrintEntity: "找不到此印表機的列印實體",
+    actionError: "Home Assistant 無法完成此操作",
+  },
+};
 
 class EpsonLabelWorksCard extends HTMLElement {
   static getConfigForm() {
@@ -45,6 +91,7 @@ class EpsonLabelWorksCard extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._draft = "";
     this._printing = false;
+    this._language = "en";
     this._discoveryKey = undefined;
     this._discoveryPromise = undefined;
   }
@@ -64,6 +111,11 @@ class EpsonLabelWorksCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._config) {
+      const language = this._cardLanguage(hass);
+      if (language !== this._language) {
+        this._language = language;
+        this._renderShell();
+      }
       this._discoverDeviceEntities();
       this._update();
     }
@@ -75,6 +127,15 @@ class EpsonLabelWorksCard extends HTMLElement {
 
   getGridOptions() {
     return { rows: 6, columns: "full", min_rows: 5, min_columns: 6 };
+  }
+
+  _cardLanguage(hass) {
+    const language = hass?.locale?.language || hass?.language || navigator.language;
+    return /^(zh-TW|zh-Hant)/i.test(language) ? "zh-Hant" : "en";
+  }
+
+  _t(key) {
+    return CARD_STRINGS[this._language]?.[key] || CARD_STRINGS.en[key] || key;
   }
 
   _explicitEntityIds(config) {
@@ -104,7 +165,7 @@ class EpsonLabelWorksCard extends HTMLElement {
       this._discoveryKey = key;
       this._update();
     } catch (error) {
-      this._showError(error?.message || "Could not discover printer entities");
+      this._showError(error?.message || this._t("discoveryError"));
     } finally {
       this._discoveryPromise = undefined;
     }
@@ -116,7 +177,7 @@ class EpsonLabelWorksCard extends HTMLElement {
       ? registry.filter((entry) => entry.device_id === this._config.device)
       : registry.filter((entry) => entry.entity_id === this._config.entity);
     const deviceId = this._config.device || selected[0]?.device_id;
-    if (!deviceId) throw new Error("The selected printer has no Home Assistant device");
+    if (!deviceId) throw new Error(this._t("noDevice"));
 
     const entries = registry.filter(
       (entry) => entry.device_id === deviceId && entry.platform === "epson_labelworks",
@@ -130,7 +191,7 @@ class EpsonLabelWorksCard extends HTMLElement {
       margin: role("-margin_mm"),
       cutMode: role("-cut_mode"),
     };
-    if (!entities.print) throw new Error("No print entity was found for this printer");
+    if (!entities.print) throw new Error(this._t("noPrintEntity"));
     return entities;
   }
 
@@ -337,27 +398,27 @@ class EpsonLabelWorksCard extends HTMLElement {
             <div class="eyebrow">LabelWorks</div>
             <h2></h2>
           </div>
-          <div class="status"><span class="status-dot"></span><span class="status-text">Unavailable</span></div>
+          <div class="status"><span class="status-dot"></span><span class="status-text">${this._t("unavailable")}</span></div>
         </header>
         <main class="compose">
-          <div class="tape-stage"><div class="tape empty">Label preview</div></div>
+          <div class="tape-stage"><div class="tape empty">${this._t("preview")}</div></div>
           <div class="input-row">
-            <textarea maxlength="255" aria-label="Label text" placeholder="Type a label..."></textarea>
-            <button class="print" type="button">Print</button>
+            <textarea maxlength="255" aria-label="${this._t("labelText")}" placeholder="${this._t("placeholder")}"></textarea>
+            <button class="print" type="button">${this._t("print")}</button>
           </div>
         </main>
         <div class="error" role="alert"></div>
         <section class="settings">
-          ${this._numberControl("tapeWidth", "Tape", "mm")}
-          ${this._numberControl("fontSize", "Font", "pt")}
-          ${this._numberControl("density", "Density", "")}
-          ${this._numberControl("margin", "Margin", "mm")}
+          ${this._numberControl("tapeWidth", this._t("tape"), "mm")}
+          ${this._numberControl("fontSize", this._t("font"), "pt")}
+          ${this._numberControl("density", this._t("density"), "")}
+          ${this._numberControl("margin", this._t("margin"), "mm")}
           <div class="setting" data-control="cutMode">
-            <label for="cutMode">Cut</label>
-            <select id="cutMode" aria-label="Cut mode">
-              <option value="each">Each label</option>
-              <option value="after">After job</option>
-              <option value="none">Do not cut</option>
+            <label for="cutMode">${this._t("cut")}</label>
+            <select id="cutMode" aria-label="${this._t("cutMode")}">
+              <option value="each">${this._t("each")}</option>
+              <option value="after">${this._t("after")}</option>
+              <option value="none">${this._t("none")}</option>
             </select>
           </div>
         </section>
@@ -381,6 +442,8 @@ class EpsonLabelWorksCard extends HTMLElement {
     this.shadowRoot.querySelector("#cutMode").addEventListener("change", (event) =>
       this._setSelect(event.target.value),
     );
+    this.shadowRoot.querySelector("textarea").value = this._draft;
+    this._updatePreview();
   }
 
   _numberControl(key, label, unit) {
@@ -404,7 +467,7 @@ class EpsonLabelWorksCard extends HTMLElement {
     statusNode.dataset.ready = String(ready);
     this.shadowRoot.querySelector(".status-text").textContent = error && error !== "no_error"
       ? error.replaceAll("_", " ")
-      : status || (available ? "Ready" : "Unavailable");
+      : status || (available ? this._t("ready") : this._t("unavailable"));
 
     this._syncNumber("tapeWidth");
     this._syncNumber("fontSize");
@@ -437,7 +500,7 @@ class EpsonLabelWorksCard extends HTMLElement {
 
   _updatePreview() {
     const preview = this.shadowRoot.querySelector(".tape");
-    preview.textContent = this._draft || "Label preview";
+    preview.textContent = this._draft || this._t("preview");
     preview.classList.toggle("empty", !this._draft);
   }
 
@@ -447,7 +510,7 @@ class EpsonLabelWorksCard extends HTMLElement {
     const printState = this._hass?.states?.[this._entities.print];
     const available = Boolean(printState) && printState.state !== "unavailable";
     button.disabled = !available || !this._draft.trim() || this._printing;
-    button.textContent = this._printing ? "Printing..." : "Print";
+    button.textContent = this._printing ? this._t("printing") : this._t("print");
   }
 
   async _setNumber(key, value) {
@@ -491,7 +554,7 @@ class EpsonLabelWorksCard extends HTMLElement {
       await this._hass.callService(domain, service, data);
       return true;
     } catch (error) {
-      this._showError(error?.message || "Home Assistant could not complete the action");
+      this._showError(error?.message || this._t("actionError"));
       return false;
     }
   }
