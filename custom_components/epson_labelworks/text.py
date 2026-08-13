@@ -17,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class EpsonLabelTextEntity(TextEntity):
     _attr_icon = "mdi:label"
-    _attr_native_min = 1
+    _attr_native_min = 0
     _attr_native_max = 255
     _attr_mode = "text"
 
@@ -46,6 +46,8 @@ class EpsonLabelTextEntity(TextEntity):
         }
 
     async def async_set_value(self, value: str) -> None:
+        if not value:
+            return
         data = {
             "text": value,
             "tape_width_mm": 12,
