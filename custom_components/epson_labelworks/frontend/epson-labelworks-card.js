@@ -21,6 +21,7 @@ const CARD_STRINGS = {
     noDevice: "The selected printer has no Home Assistant device",
     noPrintEntity: "No print entity was found for this printer",
     actionError: "Home Assistant could not complete the action",
+    selectPrinter: "Select a LabelWorks printer in the card settings",
   },
   "zh-Hant": {
     unavailable: "無法使用",
@@ -43,6 +44,7 @@ const CARD_STRINGS = {
     noDevice: "選取的印表機沒有 Home Assistant 裝置",
     noPrintEntity: "找不到此印表機的列印實體",
     actionError: "Home Assistant 無法完成此操作",
+    selectPrinter: "請在卡片設定中選擇 LabelWorks 印表機",
   },
 };
 
@@ -83,7 +85,10 @@ class EpsonLabelWorksCard extends HTMLElement {
   }
 
   static getStubConfig(hass) {
-    return {};
+    const entity = Object.keys(hass?.states || {}).find(
+      (entityId) => entityId.startsWith("text.") && entityId.endsWith("_print_label"),
+    );
+    return entity ? { entity } : {};
   }
 
   constructor() {
@@ -94,15 +99,16 @@ class EpsonLabelWorksCard extends HTMLElement {
     this._language = "en";
     this._discoveryKey = undefined;
     this._discoveryPromise = undefined;
+    this._discoveryAttempts = 0;
+    this._discoveryTimer = undefined;
   }
 
   setConfig(config) {
-    if (!config.device && !config.entity) {
-      throw new Error("Select an Epson LabelWorks printer");
-    }
     this._config = { ...config };
     this._entities = this._explicitEntityIds(config);
     this._discoveryKey = undefined;
+    this._discoveryAttempts = 0;
+    clearTimeout(this._discoveryTimer);
     this._renderShell();
     this._discoverDeviceEntities();
     this._update();
@@ -123,6 +129,10 @@ class EpsonLabelWorksCard extends HTMLElement {
 
   getCardSize() {
     return 6;
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this._discoveryTimer);
   }
 
   getGridOptions() {
@@ -163,33 +173,41 @@ class EpsonLabelWorksCard extends HTMLElement {
         Object.keys(discovered).map((role) => [role, explicit[role] || discovered[role]]),
       );
       this._discoveryKey = key;
+      this._discoveryAttempts = 0;
+      this._showError("");
       this._update();
     } catch (error) {
-      this._showError(error?.message || this._t("discoveryError"));
+      this._discoveryAttempts += 1;
+      if (this._discoveryAttempts >= 3) {
+        this._showError(error?.message || this._t("discoveryError"));
+      }
+      clearTimeout(this._discoveryTimer);
+      this._discoveryTimer = setTimeout(() => this._discoverDeviceEntities(), 2000);
     } finally {
       this._discoveryPromise = undefined;
     }
   }
 
   async _resolveDeviceEntities(key) {
-    const registry = await this._hass.callWS({ type: "config/entity_registry/list" });
+    const result = await this._hass.callWS({ type: "config/entity_registry/list_for_display" });
+    const registry = result.entities;
     const selected = this._config.device
-      ? registry.filter((entry) => entry.device_id === this._config.device)
-      : registry.filter((entry) => entry.entity_id === this._config.entity);
-    const deviceId = this._config.device || selected[0]?.device_id;
+      ? registry.filter((entry) => entry.di === this._config.device)
+      : registry.filter((entry) => entry.ei === this._config.entity);
+    const deviceId = this._config.device || selected[0]?.di;
     if (!deviceId) throw new Error(this._t("noDevice"));
 
     const entries = registry.filter(
-      (entry) => entry.device_id === deviceId && entry.platform === "epson_labelworks",
+      (entry) => entry.di === deviceId && entry.pl === "epson_labelworks",
     );
-    const role = (suffix) => entries.find((entry) => entry.unique_id?.endsWith(suffix))?.entity_id;
+    const setting = (translationKey) => entries.find((entry) => entry.tk === translationKey)?.ei;
     const entities = {
-      print: role("-print"),
-      tapeWidth: role("-tape_width_mm"),
-      fontSize: role("-font_size"),
-      density: role("-density"),
-      margin: role("-margin_mm"),
-      cutMode: role("-cut_mode"),
+      print: entries.find((entry) => entry.ei.startsWith("text."))?.ei,
+      tapeWidth: setting("tape_width_mm"),
+      fontSize: setting("font_size"),
+      density: setting("density"),
+      margin: setting("margin_mm"),
+      cutMode: setting("cut_mode"),
     };
     if (!entities.print) throw new Error(this._t("noPrintEntity"));
     return entities;
@@ -455,6 +473,11 @@ class EpsonLabelWorksCard extends HTMLElement {
 
   _update() {
     if (!this.shadowRoot || !this._hass) return;
+    if (!this._config.device && !this._config.entity) {
+      this._showError(this._t("selectPrinter"));
+      this._updatePrintButton();
+      return;
+    }
     const printState = this._hass.states[this._entities.print];
     const title = this._config.name || printState?.attributes?.friendly_name || "Epson LabelWorks";
     this.shadowRoot.querySelector("h2").textContent = title.replace(/ Print label$/, "");

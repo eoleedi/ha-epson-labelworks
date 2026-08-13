@@ -33,7 +33,7 @@ from .transport import BluetoothSerialTransport, PrinterTransport, UsbTransport
 
 SERVICE_PRINT_LABEL = "print_label"
 CARD_URL = "/epson_labelworks/epson-labelworks-card.js"
-CARD_MODULE_URL = f"{CARD_URL}?v=5"
+CARD_MODULE_URL = f"{CARD_URL}?v=7"
 SERVICE_SCHEMA = vol.Schema(
     {
         vol.Optional("config_entry_id"): cv.string,
