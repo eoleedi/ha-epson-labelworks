@@ -130,10 +130,12 @@ pytest
 
 Hardware validation is performed by the config flow, which opens the selected transport and requests a printer status frame.
 
-## Protocol Source
+## Credits and Source
 
-- https://github.com/tyalie/RE-epson-label-printer
-- https://github.com/oxplot/nospero
+Huge thanks to others contribution on reverse engineering the espon LW series protocol
+
+- [RE-epson-label-printer](github.com/tyalie/RE-epson-label-printer) by [@tyalie](githu.com/tyalie)
+- [nospero](github.com/oxplot/nospero) by [@tyalie](githu.com/oxplot)
 
 ## License
 
