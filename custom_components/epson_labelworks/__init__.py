@@ -15,8 +15,11 @@ from .const import (
     CONF_SERIAL_BAUDRATE,
     CONF_SERIAL_PORT,
     CONF_TRANSPORT,
+    CONF_USB_ADDRESS,
+    CONF_USB_BUS,
     CONF_USB_INTERFACE,
     CONF_USB_PRODUCT_ID,
+    CONF_USB_SERIAL_NUMBER,
     CONF_USB_VENDOR_ID,
     DOMAIN,
     PLATFORMS,
@@ -100,7 +103,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if data[CONF_TRANSPORT] == TRANSPORT_BLUETOOTH:
         transport = BluetoothSerialTransport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE])
     else:
-        transport = UsbTransport(data[CONF_USB_VENDOR_ID], data[CONF_USB_PRODUCT_ID], data[CONF_USB_INTERFACE])
+        transport = UsbTransport(
+            data[CONF_USB_VENDOR_ID],
+            data[CONF_USB_PRODUCT_ID],
+            data[CONF_USB_INTERFACE],
+            data.get(CONF_USB_BUS),
+            data.get(CONF_USB_ADDRESS),
+            data.get(CONF_USB_SERIAL_NUMBER),
+        )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = EpsonLabelWorksRuntime(data[CONF_NAME], transport)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

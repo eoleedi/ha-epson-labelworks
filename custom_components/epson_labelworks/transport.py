@@ -2,8 +2,53 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from . import protocol
+
+
+@dataclass(frozen=True)
+class UsbDeviceInfo:
+    vendor_id: int
+    product_id: int
+    bus: int | None
+    address: int | None
+    serial_number: str | None
+    label: str
+
+    @property
+    def selector_value(self) -> str:
+        return f"{self.vendor_id:04x}:{self.product_id:04x}:{self.bus}:{self.address}"
+
+
+def discover_usb_devices() -> list[UsbDeviceInfo]:
+    import usb.core
+
+    devices = []
+    for device in usb.core.find(find_all=True) or ():
+        manufacturer = _usb_string(device, "manufacturer")
+        product = _usb_string(device, "product")
+        serial_number = _usb_string(device, "serial_number")
+        description = " ".join(part for part in (manufacturer, product) if part) or "USB device"
+        location = f"bus {device.bus}, address {device.address}"
+        devices.append(
+            UsbDeviceInfo(
+                vendor_id=device.idVendor,
+                product_id=device.idProduct,
+                bus=device.bus,
+                address=device.address,
+                serial_number=serial_number,
+                label=f"{description} ({device.idVendor:04x}:{device.idProduct:04x}, {location})",
+            )
+        )
+    return devices
+
+
+def _usb_string(device, attribute: str) -> str | None:
+    try:
+        return getattr(device, attribute, None)
+    except Exception:
+        return None
 
 
 class PrinterTransport(ABC):
@@ -70,17 +115,35 @@ class PrinterTransport(ABC):
 
 
 class UsbTransport(PrinterTransport):
-    def __init__(self, vendor_id: int, product_id: int, interface: int = 0):
+    def __init__(
+        self,
+        vendor_id: int,
+        product_id: int,
+        interface: int = 0,
+        bus: int | None = None,
+        address: int | None = None,
+        serial_number: str | None = None,
+    ):
         self.vendor_id = vendor_id
         self.product_id = product_id
         self.interface = interface
+        self.bus = bus
+        self.address = address
+        self.serial_number = serial_number
         self.device = self.out_endpoint = self.in_endpoint = None
 
     def open(self) -> None:
         import usb.core
         import usb.util
 
-        device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id)
+        def matches(candidate) -> bool:
+            if self.serial_number:
+                return _usb_string(candidate, "serial_number") == self.serial_number
+            if self.bus is not None and self.address is not None:
+                return candidate.bus == self.bus and candidate.address == self.address
+            return True
+
+        device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id, custom_match=matches)
         if device is None:
             raise RuntimeError(f"USB Epson printer not found ({self.vendor_id:04x}:{self.product_id:04x})")
         device.reset()

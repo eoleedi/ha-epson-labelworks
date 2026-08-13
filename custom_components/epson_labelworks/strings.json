@@ -7,11 +7,10 @@
       },
       "usb": {
         "title": "USB printer",
+        "description": "Select a connected USB printer. The integration will verify that it speaks the Epson LabelWorks protocol.",
         "data": {
           "name": "Name",
-          "usb_vendor_id": "USB vendor ID",
-          "usb_product_id": "USB product ID",
-          "usb_interface": "USB interface"
+          "usb_device": "USB device"
         }
       },
       "bluetooth": {
@@ -24,7 +23,12 @@
         }
       }
     },
-    "error": {"cannot_connect": "Cannot connect to the printer or read its status"},
+    "error": {
+      "cannot_connect": "Cannot connect to the printer or read its status",
+      "no_usb_devices": "No USB devices were found. Connect the printer and check Home Assistant's USB permissions, then try again.",
+      "usb_device_unavailable": "The selected USB device is no longer available. Try again to refresh the list.",
+      "usb_discovery_failed": "USB devices could not be detected. Check Home Assistant's USB permissions."
+    },
     "abort": {"already_configured": "This printer is already configured"}
   }
 }

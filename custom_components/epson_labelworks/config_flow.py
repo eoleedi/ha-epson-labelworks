@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
@@ -8,22 +10,29 @@ from .const import (
     CONF_SERIAL_BAUDRATE,
     CONF_SERIAL_PORT,
     CONF_TRANSPORT,
+    CONF_USB_ADDRESS,
+    CONF_USB_BUS,
+    CONF_USB_DEVICE,
     CONF_USB_INTERFACE,
     CONF_USB_PRODUCT_ID,
+    CONF_USB_SERIAL_NUMBER,
     CONF_USB_VENDOR_ID,
     DEFAULT_SERIAL_BAUDRATE,
     DEFAULT_USB_INTERFACE,
-    DEFAULT_USB_PRODUCT_ID,
-    DEFAULT_USB_VENDOR_ID,
     DOMAIN,
     TRANSPORT_BLUETOOTH,
     TRANSPORT_USB,
 )
-from .transport import BluetoothSerialTransport, UsbTransport
+from .transport import BluetoothSerialTransport, UsbDeviceInfo, UsbTransport, discover_usb_devices
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class EpsonLabelWorksConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    def __init__(self) -> None:
+        self._usb_devices: dict[str, UsbDeviceInfo] = {}
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
@@ -39,21 +48,46 @@ class EpsonLabelWorksConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_usb(self, user_input=None):
         errors = {}
+        if not self._usb_devices:
+            try:
+                devices = await self.hass.async_add_executor_job(discover_usb_devices)
+                self._usb_devices = {device.selector_value: device for device in devices}
+            except Exception:
+                _LOGGER.exception("Failed to enumerate USB devices")
+                errors["base"] = "usb_discovery_failed"
+            if not self._usb_devices and not errors:
+                errors["base"] = "no_usb_devices"
         if user_input is not None:
             try:
+                device = self._usb_devices[user_input[CONF_USB_DEVICE]]
                 data = {
                     CONF_NAME: user_input[CONF_NAME],
                     CONF_TRANSPORT: TRANSPORT_USB,
-                    CONF_USB_VENDOR_ID: int(user_input[CONF_USB_VENDOR_ID], 0),
-                    CONF_USB_PRODUCT_ID: int(user_input[CONF_USB_PRODUCT_ID], 0),
-                    CONF_USB_INTERFACE: user_input[CONF_USB_INTERFACE],
+                    CONF_USB_VENDOR_ID: device.vendor_id,
+                    CONF_USB_PRODUCT_ID: device.product_id,
+                    CONF_USB_INTERFACE: DEFAULT_USB_INTERFACE,
+                    CONF_USB_BUS: device.bus,
+                    CONF_USB_ADDRESS: device.address,
                 }
-                transport = UsbTransport(data[CONF_USB_VENDOR_ID], data[CONF_USB_PRODUCT_ID], data[CONF_USB_INTERFACE])
+                if device.serial_number:
+                    data[CONF_USB_SERIAL_NUMBER] = device.serial_number
+                transport = UsbTransport(
+                    device.vendor_id,
+                    device.product_id,
+                    DEFAULT_USB_INTERFACE,
+                    device.bus,
+                    device.address,
+                    device.serial_number,
+                )
                 await self.hass.async_add_executor_job(_validate_transport, transport)
+            except KeyError:
+                errors["base"] = "usb_device_unavailable"
             except Exception:
+                _LOGGER.exception("Failed to connect to the USB printer or read its status")
                 errors["base"] = "cannot_connect"
             else:
-                await self.async_set_unique_id(f"usb-{data[CONF_USB_VENDOR_ID]:04x}-{data[CONF_USB_PRODUCT_ID]:04x}")
+                identity = device.serial_number or f"{device.bus}-{device.address}"
+                await self.async_set_unique_id(f"usb-{device.vendor_id:04x}-{device.product_id:04x}-{identity}")
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=data[CONF_NAME], data=data)
         return self.async_show_form(
@@ -61,9 +95,9 @@ class EpsonLabelWorksConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_NAME, default="Epson LW-600P"): str,
-                    vol.Required(CONF_USB_VENDOR_ID, default=f"0x{DEFAULT_USB_VENDOR_ID:04x}"): str,
-                    vol.Required(CONF_USB_PRODUCT_ID, default=f"0x{DEFAULT_USB_PRODUCT_ID:04x}"): str,
-                    vol.Required(CONF_USB_INTERFACE, default=DEFAULT_USB_INTERFACE): int,
+                    vol.Required(CONF_USB_DEVICE): vol.In(
+                        {value: device.label for value, device in self._usb_devices.items()}
+                    ),
                 }
             ),
             errors=errors,
@@ -79,6 +113,7 @@ class EpsonLabelWorksConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     BluetoothSerialTransport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE]),
                 )
             except Exception:
+                _LOGGER.exception("Failed to connect to the Bluetooth printer or read its status")
                 errors["base"] = "cannot_connect"
             else:
                 await self.async_set_unique_id(f"serial-{data[CONF_SERIAL_PORT]}")
