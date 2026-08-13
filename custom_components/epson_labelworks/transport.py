@@ -46,12 +46,20 @@ class PrinterTransport(ABC):
         self.write(protocol.reset_printer())
         time.sleep(0.5)
         self.write(protocol.build_print_stream(image, cut, density, margin_dots))
-        return self.wait_until_ready()
+        status = self.wait_until_ready()
+        self.write(protocol.reset_status_request())
+        try:
+            final_status = self.read_status(2)
+        except TimeoutError:
+            final_status = status
+        time.sleep(1)
+        return final_status
 
     def wait_until_ready(self, timeout_s: float = 60) -> protocol.Status:
         deadline = time.monotonic() + timeout_s
         last_status = None
         while time.monotonic() < deadline:
+            self.write(protocol.request_status())
             status = self.read_status(min(5, max(1, deadline - time.monotonic())))
             last_status = status
             if status.error_code or status.ready_for_print:
@@ -75,6 +83,7 @@ class UsbTransport(PrinterTransport):
         device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id)
         if device is None:
             raise RuntimeError(f"USB Epson printer not found ({self.vendor_id:04x}:{self.product_id:04x})")
+        device.reset()
         try:
             device.set_configuration()
         except usb.core.USBError:
@@ -90,6 +99,8 @@ class UsbTransport(PrinterTransport):
         self.in_endpoint = usb.util.find_descriptor(interface, custom_match=lambda endpoint: usb.util.endpoint_direction(endpoint.bEndpointAddress) == usb.util.ENDPOINT_IN)
         if self.out_endpoint is None or self.in_endpoint is None:
             raise RuntimeError("USB bulk endpoints not found")
+        device.clear_halt(self.out_endpoint.bEndpointAddress)
+        device.clear_halt(self.in_endpoint.bEndpointAddress)
         self.device = device
 
     def close(self) -> None:
@@ -106,8 +117,9 @@ class UsbTransport(PrinterTransport):
         if self.out_endpoint is None:
             raise RuntimeError("USB transport is closed")
         for chunk in protocol.stream_chunks(data):
-            if self.out_endpoint.write(chunk, timeout=1000) != len(chunk):
-                raise RuntimeError("short USB write")
+            written = self.out_endpoint.write(chunk, timeout=5000)
+            if written != len(chunk):
+                raise RuntimeError(f"short USB write ({written} of {len(chunk)} bytes)")
 
     def read(self, size: int, timeout_s: float) -> bytes:
         if self.in_endpoint is None:
