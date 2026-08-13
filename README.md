@@ -22,22 +22,20 @@ For HACS, add this repository as a custom integration repository.
 
 ## USB
 
-Choose **USB** in the config flow. The defaults are:
-
-- vendor ID: `0x04b8`
-- product ID: `0x0705`
-- interface: `0`
+Choose **USB** in the config flow, then select the printer from the detected USB devices. Vendor and product IDs are detected automatically.
 
 Home Assistant must have access to the USB device. Home Assistant Container deployments normally need the device passed through, for example:
 
 ```yaml
 services:
   homeassistant:
-    devices:
+    device_cgroup_rules:
+      - "c 189:* rwm"
+    volumes:
       - /dev/bus/usb:/dev/bus/usb
 ```
 
-The host kernel printer driver may claim the interface; the integration attempts to detach it. Appropriate container permissions or udev rules are still required.
+The cgroup rule grants access to USB character devices, including devices added after the container starts. A bind mount by itself makes the device nodes visible but Docker still blocks opening them with `Operation not permitted`. The host kernel printer driver may claim the interface; the integration attempts to detach it. Appropriate host permissions or udev rules are still required.
 
 ## Bluetooth
 
@@ -68,6 +66,8 @@ data:
 ```
 
 The entity is intentionally cleared after each print so the same text can be printed repeatedly.
+
+For Chinese and other scripts not covered by Pillow's default font, place a TrueType or OpenType font in Home Assistant's `config/fonts` directory. The integration automatically prefers `NotoSansCJKtc-Regular.otf` and `NotoSansTC-Regular.ttf`, then tries other `.otf` and `.ttf` files in that directory.
 
 ## Print Action
 
