@@ -1,7 +1,7 @@
 # Epson LabelWorks for Home Assistant
 
 [![Beta](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/eoleedi/ha-epson-labelworks/releases)
-[![GitHub Release](https://img.shields.io/github/v/release/eoleedi/ha-epson-labelworks?display_name=tag&include_prereleases)](https://github.com/eoleedi/ha-epson-labelworks/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/eoleedi/ha-epson-labelworks?display_name=tag&include_prereleases)](https://github.com/eoleedi/ha-epson-labelworks/releases)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eoleedi&repository=ha-epson-labelworks&category=integration)
 
 Custom Home Assistant integration that exposes an Epson LabelWorks LW-600P as a local printer. It generates the reverse-engineered Epson raster protocol directly and sends it over either USB or a Bluetooth Classic RFCOMM serial device.
