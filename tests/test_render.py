@@ -28,6 +28,24 @@ def test_text_label_auto_length_uses_longest_line():
     assert multiline.width == longest_line.width
 
 
+def test_font_prefers_configured_chinese_font(monkeypatch, tmp_path):
+    font_path = tmp_path / "NotoSansCJKtc-Regular.otf"
+    font_path.touch()
+    attempts = []
+
+    def load_font(name, size):
+        attempts.append((name, size))
+        if name == font_path:
+            return "font"
+        raise OSError
+
+    monkeypatch.setattr(render, "Path", lambda _: tmp_path)
+    monkeypatch.setattr(render.ImageFont, "truetype", load_font)
+
+    assert render._font(60) == "font"
+    assert attempts[-1] == (font_path, 60)
+
+
 def test_font_size_converts_points_to_printer_pixels():
     assert render.pixels_from_points(24) == 60
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import io
+from pathlib import Path
 from textwrap import wrap
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -53,9 +54,24 @@ def pixels_from_points(points: int) -> int:
 
 
 def _font(size: int) -> ImageFont.ImageFont:
-    for name in ("DejaVuSans.ttf", "Arial.ttf"):
+    names = (
+        "/config/fonts/NotoSansCJKtc-Regular.otf",
+        "/config/fonts/NotoSansTC-Regular.ttf",
+        "NotoSansCJKtc-Regular.otf",
+        "NotoSansTC-Regular.ttf",
+        "DejaVuSans.ttf",
+        "Arial.ttf",
+    )
+    for name in names:
         try:
             return ImageFont.truetype(name, size=size)
         except OSError:
             pass
+    fonts_dir = Path("/config/fonts")
+    if fonts_dir.is_dir():
+        for path in (*fonts_dir.glob("*.otf"), *fonts_dir.glob("*.ttf")):
+            try:
+                return ImageFont.truetype(path, size=size)
+            except OSError:
+                pass
     return ImageFont.load_default(size=size)
