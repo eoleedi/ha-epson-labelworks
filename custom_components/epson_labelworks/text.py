@@ -49,7 +49,7 @@ class EpsonLabelTextEntity(TextEntity):
         data = {
             "text": value,
             "tape_width_mm": 12,
-            "font_size": 28,
+            "font_size": 24,
             "cut": CutMode.AFTER,
             "density": 0,
             "margin_mm": 1,

@@ -77,7 +77,7 @@ data:
   text: "Filter changed: {{ now().date() }}"
   tape_width_mm: 12
   length_mm: 60
-  font_size: 26
+  font_size: 24
   cut: after
   density: 0
   margin_mm: 1
