@@ -28,6 +28,16 @@ def test_text_label_auto_length_uses_longest_line():
     assert multiline.width == longest_line.width
 
 
+def test_text_label_centers_visible_glyphs():
+    image = render.text_label("Center", 12, 50, 24)
+    box = image.point(lambda pixel: 255 if pixel < 140 else 0).getbbox()
+
+    assert box is not None
+    left, top, right, bottom = box
+    assert abs(left - (image.width - right)) <= 3
+    assert abs(top - (image.height - bottom)) <= 1
+
+
 def test_font_prefers_configured_chinese_font(monkeypatch, tmp_path):
     font_path = tmp_path / "NotoSansCJKtc-Regular.otf"
     font_path.touch()

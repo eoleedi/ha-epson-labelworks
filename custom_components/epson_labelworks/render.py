@@ -31,12 +31,14 @@ def text_label(text: str, tape_width_mm: float, length_mm: float | None, font_si
             lines.extend(wrap(part, chars_per_line) or [""])
     image = Image.new("L", (width, height), 255)
     draw = ImageDraw.Draw(image)
-    line_height = font_size_pixels + 4
-    y = max(0, (height - len(lines) * line_height) // 2)
-    for line in lines:
-        box = draw.textbbox((0, 0), line, font=font)
-        draw.text((max(0, (width - box[2] + box[0]) // 2), y), line, fill=0, font=font)
-        y += line_height
+    boxes = [draw.textbbox((0, 0), line, font=font) for line in lines]
+    line_gap = 4
+    block_height = sum(box[3] - box[1] for box in boxes) + line_gap * (len(lines) - 1)
+    y = max(0, (height - block_height) // 2)
+    for line, box in zip(lines, boxes, strict=True):
+        text_width = box[2] - box[0]
+        draw.text(((width - text_width) // 2 - box[0], y - box[1]), line, fill=0, font=font)
+        y += box[3] - box[1] + line_gap
     return image
 
 
