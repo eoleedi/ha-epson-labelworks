@@ -137,8 +137,8 @@ Hardware validation is performed by the config flow, which opens the selected tr
 
 Huge thanks to others contribution on reverse engineering the espon LW series protocol
 
-- [RE-epson-label-printer](github.com/tyalie/RE-epson-label-printer) by [@tyalie](githu.com/tyalie)
-- [nospero](github.com/oxplot/nospero) by [@oxplot](githu.com/oxplot)
+- [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer) by [@tyalie](https://github.com/tyalie)
+- [nospero](https://github.com/oxplot/nospero) by [@oxplot](https://github.com/oxplot)
 
 ## License
 
