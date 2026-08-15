@@ -11,6 +11,21 @@ DPI = 180
 STATUS_FRAME_LENGTH = 64
 BLACK_THRESHOLD = 140
 
+TAPE_WIDTHS_MM = {
+    0x01: 6,
+    0x02: 9,
+    0x03: 12,
+    0x04: 18,
+    0x05: 24,
+    0x06: 36,
+    0x51: 6,
+    0x52: 9,
+    0x53: 12,
+    0x54: 18,
+    0x55: 24,
+    0x56: 36,
+}
+
 
 class CutMode(StrEnum):
     EACH = "each"
@@ -137,10 +152,12 @@ def parse_status(data: bytes) -> Status:
 
     def code(key: str) -> int:
         index = text.rfind(key)
+        if index < 0 or index + 5 > len(text) or text[index + 2] not in {":", "="}:
+            raise ValueError(f"missing or invalid {key} field in Epson status frame")
         try:
-            return int(text[index + 3 : index + 5], 16) if index >= 0 else 0
-        except ValueError:
-            return 0
+            return int(text[index + 3 : index + 5], 16)
+        except ValueError as exc:
+            raise ValueError(f"missing or invalid {key} field in Epson status frame") from exc
 
     status_code = code("ST")
     error_code = code("ER")
@@ -150,7 +167,22 @@ def parse_status(data: bytes) -> Status:
         status={0: "idle", 1: "feeding", 2: "printing", 3: "data_sending", 4: "feed_end", 5: "print_end"}.get(status_code, "unknown"),
         error_code=error_code,
         error={0: "no_error", 1: "cutter_error", 6: "no_tape_cartridge", 0x15: "head_overheated", 0x21: "cover_open", 0x42: "tape_end"}.get(error_code, "unknown"),
-        tape_width_mm={1: 6, 2: 9, 3: 12, 4: 18, 5: 24, 6: 36, 0x51: 6, 0x52: 9, 0x53: 12, 0x54: 18, 0x55: 24, 0x56: 36}.get(code("TW")),
+        tape_width_mm=TAPE_WIDTHS_MM.get(code("TW")),
+    )
+
+
+def parse_usb_status(data: bytes) -> Status:
+    if len(data) < 4 or data[0] != 0x08:
+        raise ValueError("invalid Epson USB status response")
+    activity = data[1]
+    status_code = 0x00 if activity == 0 else 0x02
+    return Status(
+        raw_text=data.hex(" "),
+        status_code=status_code,
+        status="idle" if activity == 0 else "printing",
+        error_code=0,
+        error="no_error",
+        tape_width_mm=TAPE_WIDTHS_MM.get(data[3]),
     )
 
 

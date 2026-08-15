@@ -1,3 +1,4 @@
+import pytest
 from PIL import Image
 
 from epson_labelworks import protocol
@@ -28,4 +29,17 @@ def test_parse_status():
     assert status.ready_for_print
     assert status.status == "idle"
     assert status.error == "no_error"
+    assert status.tape_width_mm == 12
+
+
+def test_parse_status_rejects_missing_required_fields():
+    with pytest.raises(ValueError, match="ST field"):
+        protocol.parse_status(b"@not-a-status".ljust(63, b"\x00") + b"\xff")
+
+
+def test_parse_usb_status():
+    status = protocol.parse_usb_status(bytes.fromhex("08 00 00 03 00 00 00 00"))
+
+    assert status.ready_for_print
+    assert status.status == "idle"
     assert status.tape_width_mm == 12

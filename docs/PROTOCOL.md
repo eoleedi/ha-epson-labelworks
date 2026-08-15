@@ -295,11 +295,12 @@ L T
 raster records
 0C
 @
-poll with Q enable until ready
+Bluetooth: poll with Q enable until ST=05
+USB: poll GetLWStatus C1/01 until activity byte 1 is 00
 Q reset
 ```
 
-The differences in reset count, polling, and final status behavior are implementation choices awaiting LW-600P validation.
+The differences in reset count, polling, and final status behavior are implementation choices awaiting LW-600P validation. USB configuration accepts only devices whose product string identifies an LW-600P; the shared VID/PID alone is insufficient.
 
 Nospero also emits both leading and trailing `@` frames, although its tests expect only the final occurrence. It therefore corroborates the current stream structure but does not resolve whether the leading `@` is required [3].
 
@@ -322,6 +323,8 @@ The following USB IN requests were observed directly on an idle LW-600P. No bulk
 Response byte 3 from GetLWStatus was `03`, consistent with the documented raw 12 mm tape code. The physical cartridge width was not independently checked during this read-only probe. The first response byte, `08`, may describe the meaningful status length even though the device returned the full requested 64 bytes; this interpretation remains unverified.
 
 A 750 ms read from bulk IN endpoint `81`, without first sending a status command, timed out. This establishes only that no unsolicited data arrived during that interval; it does not prove that USB textual status is unsupported.
+
+The integration uses GetLWStatus for USB status and completion polling. It does not parse the binary USB response as a textual protocol-v1 frame.
 
 ### 4.2 LW-700 USB, Hardware-Tested
 

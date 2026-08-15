@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 from . import protocol
 
+EPSON_VENDOR_ID = 0x04B8
+LABELWORKS_PRODUCT_ID = 0x0705
+SUPPORTED_USB_MODEL = "LW-600P"
+
 
 @dataclass(frozen=True)
 class UsbDeviceInfo:
@@ -28,6 +32,8 @@ def discover_usb_devices() -> list[UsbDeviceInfo]:
     for device in usb.core.find(find_all=True) or ():
         manufacturer = _usb_string(device, "manufacturer")
         product = _usb_string(device, "product")
+        if not _is_supported_usb_device(device, product):
+            continue
         serial_number = _usb_string(device, "serial_number")
         description = " ".join(part for part in (manufacturer, product) if part) or "USB device"
         location = f"bus {device.bus}, address {device.address}"
@@ -49,6 +55,16 @@ def _usb_string(device, attribute: str) -> str | None:
         return getattr(device, attribute, None)
     except Exception:
         return None
+
+
+def _is_supported_usb_device(device, product: str | None = None) -> bool:
+    product = product if product is not None else _usb_string(device, "product")
+    return (
+        device.idVendor == EPSON_VENDOR_ID
+        and device.idProduct == LABELWORKS_PRODUCT_ID
+        and product is not None
+        and SUPPORTED_USB_MODEL in product.upper()
+    )
 
 
 class PrinterTransport(ABC):
@@ -84,33 +100,30 @@ class PrinterTransport(ABC):
         raise TimeoutError("timed out waiting for printer status")
 
     def status(self) -> protocol.Status:
-        self.write(protocol.reset_status_request())
-        return self.read_status()
+        return self._query_status()
+
+    def _query_status(self, timeout_s: float = 10) -> protocol.Status:
+        self.write(protocol.request_status())
+        return self.read_status(timeout_s)
+
+    def _status_is_complete(self, status: protocol.Status, require_print_end: bool) -> bool:
+        return status.status_code == 0x05 if require_print_end else status.ready_for_print
 
     def print_image(self, image, cut: protocol.CutMode, density: int, margin_dots: int) -> protocol.Status:
         self.write(protocol.reset_printer())
         time.sleep(0.5)
         self.write(protocol.build_print_stream(image, cut, density, margin_dots))
-        status = self.wait_until_ready()
+        status = self.wait_until_ready(require_print_end=True)
         self.write(protocol.reset_status_request())
-        try:
-            final_status = self.read_status(2)
-        except TimeoutError:
-            final_status = status
         time.sleep(1)
-        return final_status
+        return status
 
-    def wait_until_ready(self, timeout_s: float = 60) -> protocol.Status:
+    def wait_until_ready(self, timeout_s: float = 60, require_print_end: bool = False) -> protocol.Status:
         deadline = time.monotonic() + timeout_s
-        last_status = None
         while time.monotonic() < deadline:
-            self.write(protocol.request_status())
-            status = self.read_status(min(5, max(1, deadline - time.monotonic())))
-            last_status = status
-            if status.error_code or status.ready_for_print:
+            status = self._query_status(min(5, max(1, deadline - time.monotonic())))
+            if status.error_code or self._status_is_complete(status, require_print_end):
                 return status
-        if last_status is not None:
-            return last_status
         raise TimeoutError("timed out waiting for printer to finish")
 
 
@@ -146,6 +159,8 @@ class UsbTransport(PrinterTransport):
         device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id, custom_match=matches)
         if device is None:
             raise RuntimeError(f"USB Epson printer not found ({self.vendor_id:04x}:{self.product_id:04x})")
+        if not _is_supported_usb_device(device):
+            raise RuntimeError(f"unsupported USB printer; expected Epson {SUPPORTED_USB_MODEL}")
         device.reset()
         try:
             device.set_configuration()
@@ -158,6 +173,9 @@ class UsbTransport(PrinterTransport):
             pass
         usb.util.claim_interface(device, self.interface)
         interface = usb.util.find_descriptor(device.get_active_configuration(), bInterfaceNumber=self.interface)
+        if interface is None or interface.bInterfaceClass != 0x07:
+            usb.util.release_interface(device, self.interface)
+            raise RuntimeError("selected USB interface is not a printer interface")
         self.out_endpoint = usb.util.find_descriptor(interface, custom_match=lambda endpoint: usb.util.endpoint_direction(endpoint.bEndpointAddress) == usb.util.ENDPOINT_OUT)
         self.in_endpoint = usb.util.find_descriptor(interface, custom_match=lambda endpoint: usb.util.endpoint_direction(endpoint.bEndpointAddress) == usb.util.ENDPOINT_IN)
         if self.out_endpoint is None or self.in_endpoint is None:
@@ -165,6 +183,24 @@ class UsbTransport(PrinterTransport):
         device.clear_halt(self.out_endpoint.bEndpointAddress)
         device.clear_halt(self.in_endpoint.bEndpointAddress)
         self.device = device
+
+    def _query_status(self, timeout_s: float = 10) -> protocol.Status:
+        if self.device is None:
+            raise RuntimeError("USB transport is closed")
+        response = self.device.ctrl_transfer(
+            0xC1,
+            0x01,
+            0x0000,
+            0x0000,
+            64,
+            timeout=max(1, round(timeout_s * 1000)),
+        )
+        return protocol.parse_usb_status(bytes(response))
+
+    def _status_is_complete(self, status: protocol.Status, require_print_end: bool) -> bool:
+        # USB activity has no distinct print-end value; unlike queued Q replies,
+        # this control response reflects printer state at the time of the poll.
+        return status.status_code == 0x00
 
     def close(self) -> None:
         if self.device is not None:
