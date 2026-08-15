@@ -4,7 +4,10 @@
   "codeowners": [],
   "config_flow": true,
   "documentation": "https://github.com/eoleedi/ha-epson-labelworks",
-  "dependencies": ["frontend", "http"],
+  "dependencies": [
+    "frontend",
+    "http"
+  ],
   "integration_type": "device",
   "iot_class": "local_polling",
   "requirements": [
@@ -12,5 +15,5 @@
     "pyserial>=3.5,<4",
     "pyusb>=1.2,<2"
   ],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
