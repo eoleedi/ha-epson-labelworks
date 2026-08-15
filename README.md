@@ -133,16 +133,19 @@ pytest
 
 Hardware validation is performed by the config flow, which opens the selected transport and requests a printer status frame.
 
+The project's [ESCPL2 protocol research](docs/PROTOCOL.md) documents the wire format, model-specific findings, implementation assumptions, and supporting references.
+
 ## Credits and Source
 
-Huge thanks to others contribution on reverse engineering the espon LW series protocol
+Huge thanks to the contributors who reverse-engineered the Epson LabelWorks protocol:
 
 - [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer) by [@tyalie](https://github.com/tyalie)
+- [LW700Print](https://github.com/igrbtn/LW700Print) by [@igrbtn](https://github.com/igrbtn)
 - [nospero](https://github.com/oxplot/nospero) by [@oxplot](https://github.com/oxplot)
 
 ## License
 
-MIT. See [LICENSE](LICENSE). This project includes work derived from [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer); its copyright and permission notice are preserved in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+MIT. See [LICENSE](LICENSE). Copyright and permission notices for source material used from [RE-epson-label-printer](https://github.com/tyalie/RE-epson-label-printer) and [LW700Print](https://github.com/igrbtn/LW700Print) are preserved in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Support
 
