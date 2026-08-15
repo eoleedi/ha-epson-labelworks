@@ -77,7 +77,13 @@ class EpsonLabelWorksRuntime:
             image = render.image_label(image_base64, data["tape_width_mm"], data["length_mm"])
         margin_dots = protocol.dots_from_mm(data["margin_mm"]) if data["margin_mm"] else 0
         with self.lock, self.transport as printer:
-            self.last_status = printer.print_image(image, data["cut"], data["density"], margin_dots)
+            self.last_status = printer.print_image(
+                image,
+                data["cut"],
+                data["density"],
+                margin_dots,
+                data["tape_width_mm"],
+            )
             return self.last_status
 
 

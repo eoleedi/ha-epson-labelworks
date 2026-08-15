@@ -43,14 +43,23 @@ def test_wait_until_ready_requests_status():
 
 
 def test_print_image_resets_status_mode_after_print(monkeypatch):
-    transport = FakeTransport([0x00, 0x05])
+    transport = FakeTransport([0x00, 0x00, 0x05])
     monkeypatch.setattr("epson_labelworks.transport.time.sleep", lambda _: None)
 
-    status = transport.print_image(Image(), protocol.CutMode.AFTER, 0, 0)
+    status = transport.print_image(Image(), protocol.CutMode.AFTER, 0, 0, 12)
 
     assert transport.writes[-1] == protocol.reset_status_request()
     assert status.ready_for_print
     assert transport.writes[-3:-1] == [protocol.request_status(), protocol.request_status()]
+
+
+def test_print_image_rejects_mismatched_tape_before_printing():
+    transport = FakeTransport()
+
+    with pytest.raises(RuntimeError, match="installed tape is 12 mm.*18 mm"):
+        transport.print_image(Image(), protocol.CutMode.AFTER, 0, 0, 18)
+
+    assert transport.writes == [protocol.request_status()]
 
 
 def test_status_uses_status_request():

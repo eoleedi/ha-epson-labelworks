@@ -109,7 +109,25 @@ class PrinterTransport(ABC):
     def _status_is_complete(self, status: protocol.Status, require_print_end: bool) -> bool:
         return status.status_code == 0x05 if require_print_end else status.ready_for_print
 
-    def print_image(self, image, cut: protocol.CutMode, density: int, margin_dots: int) -> protocol.Status:
+    def print_image(
+        self,
+        image,
+        cut: protocol.CutMode,
+        density: int,
+        margin_dots: int,
+        tape_width_mm: float,
+    ) -> protocol.Status:
+        preflight = self.status()
+        if preflight.error_code:
+            raise RuntimeError(f"printer error before printing: {preflight.error}")
+        if not preflight.ready_for_print:
+            raise RuntimeError(f"printer is not ready: {preflight.status}")
+        if preflight.tape_width_mm is None:
+            raise RuntimeError("unable to determine installed tape width")
+        if preflight.tape_width_mm != tape_width_mm:
+            raise RuntimeError(
+                f"installed tape is {preflight.tape_width_mm} mm, but the label requests {tape_width_mm:g} mm"
+            )
         self.write(protocol.reset_printer())
         time.sleep(0.5)
         self.write(protocol.build_print_stream(image, cut, density, margin_dots))

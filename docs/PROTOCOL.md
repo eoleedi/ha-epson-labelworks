@@ -287,6 +287,7 @@ Q reset
 This integration currently sends:
 
 ```text
+Read-only status preflight and installed tape-width validation
 !
 Q enable
 @ { C D G
@@ -301,6 +302,8 @@ Q reset
 ```
 
 The differences in reset count, polling, and final status behavior are implementation choices awaiting LW-600P validation. USB configuration accepts only devices whose product string identifies an LW-600P; the shared VID/PID alone is insufficient.
+
+The preflight rejects the job before reset, raster, or cutter commands if the printer is busy, reports an error, has an unknown tape code, or contains tape whose detected width differs from the requested label width.
 
 Nospero also emits both leading and trailing `@` frames, although its tests expect only the final occurrence. It therefore corroborates the current stream structure but does not resolve whether the leading `@` is required [3].
 
