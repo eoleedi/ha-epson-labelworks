@@ -55,13 +55,13 @@ Control and raster framing are shared across the researched implementations. The
 
 The LW-600P and LW-700 share this USB layout:
 
-| Property | Shared value |
-|---|---|
-| Vendor/product ID | `04B8:0705` |
-| Interface | Printer class, interface `0` |
-| Bulk IN endpoint | `81` |
-| Bulk OUT endpoint | `02` |
-| Command language | `ESCPL2` |
+| Property          | Shared value                  |
+| ----------------- | ----------------------------- |
+| Vendor/product ID | `04B8:0705`                 |
+| Interface         | Printer class, interface`0` |
+| Bulk IN endpoint  | `81`                        |
+| Bulk OUT endpoint | `02`                        |
+| Command language  | `ESCPL2`                    |
 
 Printing uses bulk OUT; status data may use bulk IN or USB control transfers. The shared VID/PID cannot identify the model. Read the USB product string or IEEE-1284 `MDL` field instead.
 
@@ -131,11 +131,11 @@ Byte `0C` is form feed and terminates a page. Framed command `@` is a print-end 
 
 Both USB profiles implement the same three IN requests:
 
-| `bmRequestType` | `bRequest` | Setup parameters | Purpose |
-|---:|---:|---|---|
-| `C1` | `01` | `wValue=0000`, `wIndex=0000`, `wLength=64` | Vendor GetLWStatus |
-| `A1` | `01` | `wValue=0000`, `wIndex=0000`, `wLength=1` | Printer-class port status |
-| `A1` | `00` | `wValue=0000`, interface `wIndex=0000` | Printer-class IEEE-1284 device ID |
+| `bmRequestType` | `bRequest` | Setup parameters                                 | Purpose                           |
+| ----------------: | -----------: | ------------------------------------------------ | --------------------------------- |
+|            `C1` |       `01` | `wValue=0000`, `wIndex=0000`, `wLength=64` | Vendor GetLWStatus                |
+|            `A1` |       `01` | `wValue=0000`, `wIndex=0000`, `wLength=1`  | Printer-class port status         |
+|            `A1` |       `00` | `wValue=0000`, interface `wIndex=0000`       | Printer-class IEEE-1284 device ID |
 
 Observed GetLWStatus data begins with `08`; byte 1 represents printer activity in LW-700 testing, and byte 3 carries a tape code on both models. Response length and observed values are recorded in each profile.
 
@@ -243,15 +243,15 @@ Nospero uses Bluetooth RFCOMM channel 1 at 115200 8N1 [3]. This integration supp
 
 Read-only USB inspection on project hardware confirmed:
 
-| Property | LW-600P value |
-|---|---|
-| USB version | 1.10, full speed |
-| Device release | `0100` |
-| Manufacturer | `EPSON` |
-| Product | `EPSON LW-600P` |
-| Configuration | One, self-powered, 100 mA |
-| Interface details | Subclass `01`, bidirectional protocol `02`, 64-byte endpoint packets |
-| IEEE-1284 identity | `MFG:EPSON;CMD:ESCPL2;MDL:LW-600P;CLS:PRINTER;` |
+| Property           | LW-600P value                                                           |
+| ------------------ | ----------------------------------------------------------------------- |
+| USB version        | 1.10, full speed                                                        |
+| Device release     | `0100`                                                                |
+| Manufacturer       | `EPSON`                                                               |
+| Product            | `EPSON LW-600P`                                                       |
+| Configuration      | One, self-powered, 100 mA                                               |
+| Interface details  | Subclass`01`, bidirectional protocol `02`, 64-byte endpoint packets |
+| IEEE-1284 identity | `MFG:EPSON;CMD:ESCPL2;MDL:LW-600P;CLS:PRINTER;`                       |
 
 The shared transport parameters are defined in section 2.1.
 
@@ -317,11 +317,11 @@ The LW-600P capability profile uses the shared 64-byte textual status format def
 
 The following USB IN requests were observed directly on an idle LW-600P. No bulk OUT data or ESCPL2 command was sent.
 
-| Request | Observed LW-600P response |
-|---|---|
-| GetLWStatus `C1/01` | 64 bytes: `08 00 00 03` followed by 60 zero bytes |
-| Port status `A1/01` | `18` |
-| Device ID `A1/00` | `00 2F` followed by the 45-byte IEEE-1284 identity above |
+| Request              | Observed LW-600P response                                  |
+| -------------------- | ---------------------------------------------------------- |
+| GetLWStatus`C1/01` | 64 bytes:`08 00 00 03` followed by 60 zero bytes         |
+| Port status`A1/01` | `18`                                                     |
+| Device ID`A1/00`   | `00 2F` followed by the 45-byte IEEE-1284 identity above |
 
 Response byte 3 from GetLWStatus was `03`, consistent with the documented raw 12 mm tape code. The physical cartridge width was not independently checked during this read-only probe. The first response byte, `08`, may describe the meaningful status length even though the device returned the full requested 64 bytes; this interpretation remains unverified.
 
@@ -340,9 +340,9 @@ The integration uses GetLWStatus for USB status and completion polling. It does 
 
 #### Transport
 
-| Property | LW-700 value |
-|---|---|
-| Product model | `LW-700` |
+| Property           | LW-700 value                                     |
+| ------------------ | ------------------------------------------------ |
+| Product model      | `LW-700`                                       |
 | IEEE-1284 identity | `MFG:EPSON;CMD:ESCPL2;MDL:LW-700;CLS:PRINTER;` |
 
 The shared transport parameters are defined in section 2.1. Vendor engage requests `02`, `03`, and `04` stall and are not required on the tested printer [2].
@@ -376,11 +376,11 @@ The default encoder emits 64 leading and 64 trailing blank raster records, appro
 
 ##### USB Control Status
 
-| Request | Observed LW-700 response |
-|---|---|
-| GetLWStatus `C1/01` | Eight bytes, for example `08 00 00 04 00 00 00 00` |
-| Port status `A1/01` | `38` |
-| Device ID `A1/00` | IEEE-1284 identity above |
+| Request              | Observed LW-700 response                            |
+| -------------------- | --------------------------------------------------- |
+| GetLWStatus`C1/01` | Eight bytes, for example`08 00 00 04 00 00 00 00` |
+| Port status`A1/01` | `38`                                              |
+| Device ID`A1/00`   | IEEE-1284 identity above                            |
 
 In GetLWStatus:
 
@@ -416,16 +416,16 @@ The Android-derived protocol-v1 response is a 64-byte textual frame beginning wi
 @ST:00;ER:00;TW:03;...
 ```
 
-| Field | Meaning |
-|---|---|
-| `ST` | Printer state |
-| `ER` | Error code |
-| `TW` | Raw tape-width code |
-| `TR` | Tape kind |
-| `EI`, `EJ` | Error details |
-| `TO` | Tape option |
-| `IR` | Ink ribbon |
-| `RR` | Remaining ribbon |
+| Field          | Meaning             |
+| -------------- | ------------------- |
+| `ST`         | Printer state       |
+| `ER`         | Error code          |
+| `TW`         | Raw tape-width code |
+| `TR`         | Tape kind           |
+| `EI`, `EJ` | Error details       |
+| `TO`         | Tape option         |
+| `IR`         | Ink ribbon          |
+| `RR`         | Remaining ribbon    |
 
 The Android research does not define a required final byte. Nospero and this integration require byte 63 to be `FF` [3]. Their parsers accept either `:` or `=` between keys and values because they locate the key and read the value at a fixed offset.
 
