@@ -44,10 +44,24 @@ class EpsonLabelTextEntity(TextEntity):
             "tape_width_mm": status.tape_width_mm,
         }
 
+    async def async_update(self) -> None:
+        try:
+            await self.hass.async_add_executor_job(self._runtime.status)
+        except Exception:
+            self._attr_available = False
+        else:
+            self._attr_available = True
+
     async def async_set_value(self, value: str) -> None:
         if not value:
             return
         data = self._runtime.settings.text_print_data(value)
-        await self.hass.async_add_executor_job(self._runtime.print_label, data)
+        try:
+            await self.hass.async_add_executor_job(self._runtime.print_label, data)
+        except Exception:
+            self._attr_available = False
+            self.async_write_ha_state()
+            raise
+        self._attr_available = True
         self._attr_native_value = ""
         self.async_write_ha_state()

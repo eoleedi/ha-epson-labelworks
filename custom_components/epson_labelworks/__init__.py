@@ -60,9 +60,11 @@ class EpsonLabelWorksRuntime:
         self.last_status: protocol.Status | None = None
 
     def status(self) -> protocol.Status:
-        with self.lock, self.transport as printer:
-            self.last_status = printer.status()
-            return self.last_status
+        with self.lock:
+            self.last_status = None
+            with self.transport as printer:
+                self.last_status = printer.status()
+                return self.last_status
 
     def print_label(self, data: dict) -> protocol.Status:
         text = data.get("text")
@@ -76,15 +78,17 @@ class EpsonLabelWorksRuntime:
                 raise ValueError("length_mm is required for image labels")
             image = render.image_label(image_base64, data["tape_width_mm"], data["length_mm"])
         margin_dots = protocol.dots_from_mm(data["margin_mm"]) if data["margin_mm"] else 0
-        with self.lock, self.transport as printer:
-            self.last_status = printer.print_image(
-                image,
-                data["cut"],
-                data["density"],
-                margin_dots,
-                data["tape_width_mm"],
-            )
-            return self.last_status
+        with self.lock:
+            self.last_status = None
+            with self.transport as printer:
+                self.last_status = printer.print_image(
+                    image,
+                    data["cut"],
+                    data["density"],
+                    margin_dots,
+                    data["tape_width_mm"],
+                )
+                return self.last_status
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
