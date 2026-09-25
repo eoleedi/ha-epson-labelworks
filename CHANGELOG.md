@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.2.0...v0.2.1) (2026-09-25)
+
+
+### Bug Fixes
+
+* satisfy HACS and hassfest validation ([935b91b](https://github.com/eoleedi/ha-epson-labelworks/commit/935b91ba8c7e38f39c4d32299a420e97f0dac501))
+
 ## [0.2.0](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.1.1...v0.2.0) (2026-08-19)
 
 
