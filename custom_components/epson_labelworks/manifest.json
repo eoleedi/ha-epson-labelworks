@@ -3,13 +3,14 @@
   "name": "Epson LabelWorks",
   "codeowners": [],
   "config_flow": true,
-  "documentation": "https://github.com/eoleedi/ha-epson-labelworks",
   "dependencies": [
     "frontend",
     "http"
   ],
+  "documentation": "https://github.com/eoleedi/ha-epson-labelworks",
   "integration_type": "device",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/eoleedi/ha-epson-labelworks/issues",
   "requirements": [
     "Pillow>=10,<13",
     "pyserial>=3.5,<4",
