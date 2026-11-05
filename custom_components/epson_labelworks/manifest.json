@@ -2,7 +2,7 @@
   "domain": "epson_labelworks",
   "name": "Epson LabelWorks",
   "categories": ["computers_network.printers"],
-  "codeowners": [],
+  "codeowners": ["@eoleedi"],
   "config_flow": true,
   "dependencies": [
     "frontend",
