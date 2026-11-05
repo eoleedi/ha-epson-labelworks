@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.2.0...v0.2.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* allow Pillow 13 for Home Assistant 2026.11 ([9bc8b83](https://github.com/eoleedi/ha-epson-labelworks/commit/9bc8b83d7a952a4087cdafc2588caff457d36ad4))
+* categorize integration under printers ([9eafd36](https://github.com/eoleedi/ha-epson-labelworks/commit/9eafd366536b02b91e16e00b02c66017277e0ea5))
+* omit Home Assistant dependencies from manifest ([18dba64](https://github.com/eoleedi/ha-epson-labelworks/commit/18dba643b91ad131ca3c4b8f85433018d106c1a9))
+* satisfy HACS and hassfest validation ([935b91b](https://github.com/eoleedi/ha-epson-labelworks/commit/935b91ba8c7e38f39c4d32299a420e97f0dac501))
+* **transport:** pause between status polls ([a59aa0a](https://github.com/eoleedi/ha-epson-labelworks/commit/a59aa0a1beb8ea94e76e5e3d86e2c4a5f661d4ec))
+* **transport:** pause between status polls ([7045919](https://github.com/eoleedi/ha-epson-labelworks/commit/704591947cf858e827353beeab56ad09f10b1d9a))
+
 ## [0.2.0](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.1.1...v0.2.0) (2026-08-19)
 
 
