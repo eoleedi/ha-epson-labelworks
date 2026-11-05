@@ -12,8 +12,6 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/eoleedi/ha-epson-labelworks/issues",
   "requirements": [
-    "Pillow>=10,<14",
-    "pyserial>=3.5,<4",
     "pyusb>=1.2,<2"
   ],
   "version": "0.2.0"
