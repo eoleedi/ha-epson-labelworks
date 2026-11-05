@@ -1,6 +1,7 @@
 {
   "domain": "epson_labelworks",
   "name": "Epson LabelWorks",
+  "categories": ["computers_network.printers"],
   "codeowners": [],
   "config_flow": true,
   "dependencies": [
