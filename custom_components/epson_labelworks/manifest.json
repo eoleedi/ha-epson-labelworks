@@ -4,7 +4,9 @@
   "categories": [
     "computers_network.printers"
   ],
-  "codeowners": ["@eoleedi"],
+  "codeowners": [
+    "@eoleedi"
+  ],
   "config_flow": true,
   "dependencies": [
     "frontend",
@@ -17,5 +19,5 @@
   "requirements": [
     "pyusb>=1.2,<2"
   ],
-  "version": "0.2.1"
+  "version": "0.2.2"
 }
