@@ -1,7 +1,9 @@
 {
   "domain": "epson_labelworks",
   "name": "Epson LabelWorks",
-  "categories": ["computers_network.printers"],
+  "categories": [
+    "computers_network.printers"
+  ],
   "codeowners": [],
   "config_flow": true,
   "dependencies": [
@@ -15,5 +17,5 @@
   "requirements": [
     "pyusb>=1.2,<2"
   ],
-  "version": "0.2.0"
+  "version": "0.2.1"
 }
