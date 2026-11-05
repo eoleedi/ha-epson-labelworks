@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.2.1...v0.2.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* declare integration codeowner ([e52d199](https://github.com/eoleedi/ha-epson-labelworks/commit/e52d19914af16035ef3a4f8a9de3952818a8f5e4))
+
 ## [0.2.1](https://github.com/eoleedi/ha-epson-labelworks/compare/v0.2.0...v0.2.1) (2026-11-05)
 
 
