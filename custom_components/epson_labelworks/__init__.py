@@ -29,7 +29,7 @@ from .const import (
     TRANSPORT_BLUETOOTH,
 )
 from .settings import PrintSettings
-from .transport import BluetoothSerialTransport, PrinterTransport, UsbTransport
+from .transport import create_bluetooth_transport, PrinterTransport, UsbTransport
 
 SERVICE_PRINT_LABEL = "print_label"
 CARD_URL = "/epson_labelworks/epson-labelworks-card.js"
@@ -123,7 +123,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data = entry.data
     if data[CONF_TRANSPORT] == TRANSPORT_BLUETOOTH:
-        transport = BluetoothSerialTransport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE])
+        transport = create_bluetooth_transport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE])
     else:
         transport = UsbTransport(
             data[CONF_USB_VENDOR_ID],

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import socket
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -10,6 +12,9 @@ EPSON_VENDOR_ID = 0x04B8
 LABELWORKS_PRODUCT_ID = 0x0705
 SUPPORTED_USB_MODEL = "LW-600P"
 STATUS_POLL_INTERVAL_S = 1
+DEFAULT_RFCOMM_CHANNEL = 1
+RFCOMM_CONNECT_TIMEOUT_S = 10
+_BLUETOOTH_ADDRESS = re.compile(r"^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
 
 
 @dataclass(frozen=True)
@@ -279,3 +284,64 @@ class BluetoothSerialTransport(PrinterTransport):
             raise RuntimeError("Bluetooth serial transport is closed")
         self.serial.timeout = timeout_s
         return self.serial.read(size)
+
+
+class BluetoothRfcommTransport(PrinterTransport):
+    """Talk to the printer over a native RFCOMM socket, without an /dev/rfcomm* device.
+
+    This works inside containers such as Home Assistant OS, where creating RFCOMM
+    TTY bindings on the host is not possible. The printer is addressed by its
+    Bluetooth MAC address and BlueZ pairs on demand when connecting.
+    """
+
+    def __init__(self, address: str, channel: int = DEFAULT_RFCOMM_CHANNEL):
+        self.address = address.upper()
+        self.channel = channel
+        self.socket = None
+
+    def open(self) -> None:
+        if not hasattr(socket, "AF_BLUETOOTH") or not hasattr(socket, "BTPROTO_RFCOMM"):
+            raise RuntimeError("this Python build does not support Bluetooth RFCOMM sockets")
+        sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+        try:
+            sock.settimeout(RFCOMM_CONNECT_TIMEOUT_S)
+            sock.connect((self.address, self.channel))
+        except Exception:
+            sock.close()
+            raise
+        self.socket = sock
+
+    def close(self) -> None:
+        if self.socket is not None:
+            self.socket.close()
+        self.socket = None
+
+    def write(self, data: bytes) -> None:
+        if self.socket is None:
+            raise RuntimeError("Bluetooth RFCOMM transport is closed")
+        self.socket.settimeout(5)
+        self.socket.sendall(data)
+
+    def read(self, size: int, timeout_s: float) -> bytes:
+        if self.socket is None:
+            raise RuntimeError("Bluetooth RFCOMM transport is closed")
+        self.socket.settimeout(max(timeout_s, 0.01))
+        try:
+            data = self.socket.recv(size)
+        except TimeoutError:
+            return b""
+        if not data:
+            raise ConnectionError("Bluetooth RFCOMM connection closed by printer")
+        return data
+
+
+def is_bluetooth_address(value: str) -> bool:
+    return bool(_BLUETOOTH_ADDRESS.match(value.strip()))
+
+
+def create_bluetooth_transport(port: str, baudrate: int) -> PrinterTransport:
+    """Return an RFCOMM socket transport for a MAC address, otherwise a serial device transport."""
+    port = port.strip()
+    if is_bluetooth_address(port):
+        return BluetoothRfcommTransport(port)
+    return BluetoothSerialTransport(port, baudrate)

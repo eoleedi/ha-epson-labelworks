@@ -14,11 +14,11 @@
         }
       },
       "bluetooth": {
-        "title": "Bluetooth serial printer",
-        "description": "Pair the printer on the host and expose it as an RFCOMM serial device first.",
+        "title": "Bluetooth printer",
+        "description": "Enter the printer's Bluetooth address (for example 64:EB:8C:12:34:56) to connect directly over RFCOMM, which needs no host setup and works on Home Assistant OS. Alternatively enter an RFCOMM serial device that is already bound on the host (for example /dev/rfcomm0); the baud rate only applies to serial devices.",
         "data": {
           "name": "Name",
-          "serial_port": "Serial device",
+          "serial_port": "Bluetooth address or serial device",
           "serial_baudrate": "Baud rate"
         }
       }
