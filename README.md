@@ -53,7 +53,16 @@ The integration's Bluetooth option is Bluetooth Classic RFCOMM, not BLE. ESPHome
 
 ### Direct RFCOMM (recommended)
 
-Enter the printer's Bluetooth address (for example `AA:BB:CC:DD:EE:FF`) during setup. The integration opens an RFCOMM socket on channel 1 itself, so no `/dev/rfcomm*` device and no host shell are needed. This is the option to use on Home Assistant OS. If the printer requires pairing, BlueZ pairs on the first connection; printers that need a PIN must be paired once on the host first (for example with `bluetoothctl`).
+Enter the printer's Bluetooth address (for example `AA:BB:CC:DD:EE:FF`) during setup. The integration opens an RFCOMM socket on channel 1 itself, so no `/dev/rfcomm*` binding has to be created on the host. This is the option to use on Home Assistant OS. The printer must be paired with the host once, otherwise the connection times out. On Home Assistant OS this works from the Advanced SSH & Web Terminal add-on (no PIN was required for an LW-600P):
+
+```sh
+bluetoothctl
+agent NoInputNoOutput
+default-agent
+pair AA:BB:CC:DD:EE:FF
+trust AA:BB:CC:DD:EE:FF
+quit
+```
 
 ### Bound serial device
 
