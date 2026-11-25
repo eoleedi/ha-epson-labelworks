@@ -13,7 +13,7 @@ Custom Home Assistant integration that exposes an Epson LabelWorks LW-600P as a 
 ## Features
 
 - USB bulk transport, defaulting to Epson `04b8:0705`
-- Bluetooth Classic serial transport through a paired `/dev/rfcomm*` device
+- Bluetooth Classic transport, either as a direct RFCOMM socket to the printer's Bluetooth address or through a bound `/dev/rfcomm*` device
 - `text.epson_labelworks_print_label` entity for quick text printing
 - `epson_labelworks.print_label` action for text or base64 PNG/JPEG printing
 - tape width, automatic or fixed label length, font size, cut mode, density, and margin controls
@@ -49,7 +49,24 @@ The cgroup rule grants access to USB character devices, including devices added 
 
 ## Bluetooth
 
-The integration's Bluetooth option is Bluetooth Classic serial, not BLE. Pair the printer on the Home Assistant host and bind its serial channel before setup:
+The integration's Bluetooth option is Bluetooth Classic RFCOMM, not BLE. ESPHome/Shelly Bluetooth proxies only relay BLE, so the Home Assistant host needs a local Bluetooth adapter.
+
+### Direct RFCOMM (recommended)
+
+Enter the printer's Bluetooth address (for example `AA:BB:CC:DD:EE:FF`) during setup. The integration opens an RFCOMM socket on channel 1 itself, so no `/dev/rfcomm*` binding has to be created on the host. This is the option to use on Home Assistant OS. The printer must be paired with the host once, otherwise the connection times out. On Home Assistant OS this works from the Advanced SSH & Web Terminal add-on (no PIN was required for an LW-600P):
+
+```sh
+bluetoothctl
+agent NoInputNoOutput
+default-agent
+pair AA:BB:CC:DD:EE:FF
+trust AA:BB:CC:DD:EE:FF
+quit
+```
+
+### Bound serial device
+
+On hosts where you manage BlueZ yourself, you can still bind the serial channel and configure the device path instead:
 
 ```sh
 bluetoothctl

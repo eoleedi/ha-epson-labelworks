@@ -23,7 +23,7 @@ from .const import (
     TRANSPORT_BLUETOOTH,
     TRANSPORT_USB,
 )
-from .transport import BluetoothSerialTransport, UsbDeviceInfo, UsbTransport, discover_usb_devices
+from .transport import create_bluetooth_transport, is_bluetooth_address, UsbDeviceInfo, UsbTransport, discover_usb_devices
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -107,10 +107,13 @@ class EpsonLabelWorksConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             data = {**user_input, CONF_TRANSPORT: TRANSPORT_BLUETOOTH}
+            data[CONF_SERIAL_PORT] = data[CONF_SERIAL_PORT].strip()
+            if is_bluetooth_address(data[CONF_SERIAL_PORT]):
+                data[CONF_SERIAL_PORT] = data[CONF_SERIAL_PORT].upper()
             try:
                 await self.hass.async_add_executor_job(
                     _validate_transport,
-                    BluetoothSerialTransport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE]),
+                    create_bluetooth_transport(data[CONF_SERIAL_PORT], data[CONF_SERIAL_BAUDRATE]),
                 )
             except Exception:
                 _LOGGER.exception("Failed to connect to the Bluetooth printer or read its status")
